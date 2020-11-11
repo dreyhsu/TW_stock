@@ -1,0 +1,128 @@
+<html lang="en">
+
+<head>
+    <title>AJAX 與資料處理</title>
+    <style>
+        @charset "UTF-8";
+
+        * {
+            font-family: 微軟正黑體;
+        }
+
+        img {
+            width: 100%;
+        }
+
+        #shoplist {
+            display: flex;
+            list-style: none;
+            padding: 0;
+        }
+
+        #shoplist li {
+            flex: 1;
+            cursor: pointer;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            margin: 5px;
+            font-size: 12px;
+            border-radius: 5px;
+        }
+
+        #shoplist li:hover {
+            background-color: #f5f5f5;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #shoplist li img {
+            mix-blend-mode: multiply;
+        }
+    </style>
+</head>
+
+<body translate="no">
+    <h2>請選擇您要的鞋子</h2>
+    <hr />
+    <ul id="shoplist"></ul>
+    <h3>你選擇了：</h3>
+    <p class="selectinfo"></p>
+    <button onclick="downloadList()">載入清單</button>
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+
+    <script id="rendered-js">
+        var cataurl = "https://2017.awiclass.monoame.com/api/demo/shop"
+        var imgurl = "https://2017.awiclass.monoame.com/"
+        var items = []
+
+        function downloadList() {
+            $.ajax({
+                url: cataurl,
+                success: function (res) {
+                    console.log(res)
+                    items = res
+                    updateList()//寫這裡
+                },
+                error: function () {
+                    console.log("載入失敗")
+                }
+            })//updateList()//不能將updateList()寫在此執行，要成功後再執行
+        }
+
+        function updateList() {
+            $("ul#shoplist").html("") //先清空原來顯示的商品
+
+            // 針對"每一個"商品去做加入清單的動作-->array.forEach()
+            // items為一陣列，是前一段呼叫AJAX後所得
+            //ES6寫法為items.forEach((item)=>{}
+            items.forEach(function (item) {
+
+                //ES6字串寫法
+                var item = `
+      <li data-id="${item.id}">
+        <img src="${imgurl}${item.img}">
+        <h3>${item.name}</h3>
+      </li>
+    `
+                var itemEl = $(item)
+                //jQuery幫我們把 item 這個html轉換成元件使用-->可以綁定事件
+                //itemEl.click(()=>{} 若這裡使用新的語法會導致$(this)抓不到東西
+                itemEl.click(function () {
+                    var selectedId = $(this).attr("data-id")
+                    console.log(selectedId)
+                    //取得$(this)這個選中的東西 的屬性("data-id")
+                    //根據這個數字載入第二次的ajax
+                    updateSelect(selectedId)
+                })
+                $("ul#shoplist").append(itemEl)
+            })
+        }
+        function updateSelect(id) {
+            $.ajax({
+                url: cataurl + "/" + id,
+                //取得單獨商品資料
+                success: function (res) {
+                    //用一個引數res來接回傳回來的結果
+                    var content = `
+        <ul>
+          <li>價格：${res.price}</li>
+          <li>顏色：${res.color}</li>
+          <li>尚有存貨：${res.count}</li>
+          <li>描述：${res.description}</li>     
+        </ul>
+      `
+                    console.log(res)
+
+                    //先把它轉成文字 JSON.stringify
+                    $(".selectinfo").html(content)
+
+                }
+            })
+        }
+    </script>
+
+
+
+</body>
+
+</html>
